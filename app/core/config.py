@@ -5,27 +5,30 @@ from typing import Optional
 class Settings(BaseSettings):
     """Configuration de l'application Tourisme Burkina"""
     
-    # MongoDB
-    MONGODB_URL: str = "mongodb://localhost:27017"
-    DATABASE_NAME: str = "tourisme_burkina"
+    # MongoDB - REQUIS: À définir via variables d'environnement
+    MONGODB_URL: str
+    DATABASE_NAME: str
     
-    # Application
-    APP_NAME: str = "Tourisme Burkina API"
-    APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    # Application - REQUIS: À définir via variables d'environnement
+    APP_NAME: str
+    APP_VERSION: str
+    DEBUG: bool
     
-    # API
-    API_V1_PREFIX: str = "/api/v1"
+    # API - REQUIS: À définir via variables d'environnement
+    API_V1_PREFIX: str
     
-    # Sécurité & JWT
-    SECRET_KEY: str = "your-secret-key-change-in-production-please-do-it-now"
+    # Sécurité & JWT - REQUIS: À définir via variables d'environnement
+    SECRET_KEY: str
     
-    # CORS - peut être une chaîne séparée par des virgules ou une liste JSON
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://192.168.11.157:8000,*"
+    # CORS - REQUIS: À définir via variables d'environnement
+    # Utilisez "*" pour accepter toutes les origines ou liste séparée par virgules
+    ALLOWED_ORIGINS: str
     
     @property
     def cors_origins(self) -> list:
-        """Convertit ALLOWED_ORIGINS en liste"""
+        """Convertit ALLOWED_ORIGINS en liste. Si vide ou *, accepte toutes les origines"""
+        if not self.ALLOWED_ORIGINS or self.ALLOWED_ORIGINS.strip() == "":
+            return ["*"]
         if isinstance(self.ALLOWED_ORIGINS, str):
             return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
         return self.ALLOWED_ORIGINS

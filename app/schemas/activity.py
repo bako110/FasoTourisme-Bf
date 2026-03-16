@@ -30,8 +30,8 @@ class ActivityCreate(BaseModel):
     langue_guide: List[str] = ["français", "mooré", "dioula"]
     transport_inclus: bool = False
     repas_inclus: bool = False
-    image_principale: Optional[str] = None
-    galerie_images: List[str] = []
+    image: Optional[str] = None
+    images: List[str] = []
     video_url: Optional[str] = None
 
 
@@ -63,8 +63,8 @@ class ActivityUpdate(BaseModel):
     langue_guide: Optional[List[str]] = None
     transport_inclus: Optional[bool] = None
     repas_inclus: Optional[bool] = None
-    image_principale: Optional[str] = None
-    galerie_images: Optional[List[str]] = None
+    image: Optional[str] = None
+    images: Optional[List[str]] = None
     video_url: Optional[str] = None
     note_moyenne: Optional[float] = None
     publie: Optional[bool] = None
@@ -99,8 +99,8 @@ class ActivityResponse(BaseModel):
     langue_guide: List[str]
     transport_inclus: bool
     repas_inclus: bool
-    image_principale: Optional[str]
-    galerie_images: List[str]
+    image: Optional[str]
+    images: List[str]
     video_url: Optional[str]
     note_moyenne: float
     nombre_evaluations: int

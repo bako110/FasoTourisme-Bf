@@ -20,8 +20,8 @@ class DestinationCreate(BaseModel):
     acces_securise: bool = True
     tarif_entree_fcfa: Optional[float] = None
     tarif_guide_fcfa: Optional[float] = None
-    image_principale: Optional[str] = None
-    galerie_images: List[str] = []
+    image: Optional[str] = None
+    images: List[str] = []
     video_url: Optional[str] = None
 
 
@@ -42,8 +42,8 @@ class DestinationUpdate(BaseModel):
     acces_securise: Optional[bool] = None
     tarif_entree_fcfa: Optional[float] = None
     tarif_guide_fcfa: Optional[float] = None
-    image_principale: Optional[str] = None
-    galerie_images: Optional[List[str]] = None
+    image: Optional[str] = None
+    images: Optional[List[str]] = None
     video_url: Optional[str] = None
     note_moyenne: Optional[float] = None
     publie: Optional[bool] = None
@@ -51,30 +51,33 @@ class DestinationUpdate(BaseModel):
 
 class DestinationResponse(BaseModel):
     """Schéma de réponse pour une destination"""
-    id: Optional[str] = Field(None, alias="_id")
+    id: Optional[str] = None
     nom: str
     description: str
     region: str
     province: str
     localite: str
     type_destination: str
-    categorie: List[str]
-    latitude: Optional[float]
-    longitude: Optional[float]
-    altitude: Optional[float]
-    temps_acces_heures: Optional[float]
-    meilleure_saison: List[str]
-    acces_securise: bool
-    tarif_entree_fcfa: Optional[float]
-    tarif_guide_fcfa: Optional[float]
-    image_principale: Optional[str]
-    galerie_images: List[str]
-    video_url: Optional[str]
-    note_moyenne: float
-    nombre_evaluations: int
-    publie: bool
-    date_creation: datetime
-    date_modification: datetime
+    categorie: Optional[List[str]] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    altitude: Optional[float] = None
+    temps_acces_heures: Optional[float] = None
+    meilleure_saison: Optional[List[str]] = None
+    acces_securise: Optional[bool] = None
+    tarif_entree_fcfa: Optional[float] = None
+    tarif_guide_fcfa: Optional[float] = None
+    image_principale: Optional[object] = None  # Peut être string ou dict
+    galerie_images: Optional[List[object]] = None  # Peut être list de strings ou dicts
+    images: Optional[List[object]] = None  # Support pour le format 'images' du seed
+    video_url: Optional[str] = None
+    note_moyenne: Optional[float] = None
+    nombre_evaluations: Optional[int] = None
+    publie: Optional[bool] = None
+    date_creation: Optional[datetime] = None
+    date_modification: Optional[datetime] = None
+    _id: Optional[str] = None  # Pour compatibilité MongoDB
     
     class Config:
         populate_by_name = True
+        extra = "allow"  # Permets les champs extra du MongoDB

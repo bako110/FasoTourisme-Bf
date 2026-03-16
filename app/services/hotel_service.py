@@ -10,13 +10,36 @@ logger = logging.getLogger(__name__)
 class HotelService:
     """Service pour gérer les hôtels"""
     
-    def __init__(self):
+    def __init__(self, db=None):
         self.collection_name = "hotels"
+        db = db or get_database()
+        self.collection = db[self.collection_name]
+
+    def _to_response_dict(self, hotel: dict) -> dict:
+        """Normalise un document hôtel pour le schéma de réponse."""
+        if not hotel:
+            return hotel
+
+        if "_id" in hotel:
+            hotel["id"] = str(hotel["_id"])
+
+        hotel.setdefault("types_chambres", [])
+        hotel.setdefault("services", [])
+        hotel.setdefault("equipements", [])
+        hotel.setdefault("galerie_images", [])
+        hotel.setdefault("note_moyenne", 0.0)
+        hotel.setdefault("nombre_evaluations", 0)
+        hotel.setdefault("publie", True)
+        return hotel
     
-    async def create_hotel(self, hotel: HotelCreate) -> str:
+    async def create_hotel(self, hotel: HotelCreate, owner_id: Optional[str] = None) -> str:
         """Créer un nouvel hôtel"""
         try:
             hotel_dict = hotel.model_dump()
+            hotel_dict["owner_id"] = owner_id
+            hotel_dict.setdefault("note_moyenne", 0.0)
+            hotel_dict.setdefault("nombre_evaluations", 0)
+            hotel_dict.setdefault("publie", True)
             result = await self.collection.insert_one(hotel_dict)
             logger.info(f"Hôtel créé: {result.inserted_id}")
             return str(result.inserted_id)
@@ -28,9 +51,7 @@ class HotelService:
         """Récupérer un hôtel par ID"""
         try:
             hotel = await self.collection.find_one({"_id": ObjectId(hotel_id)})
-            if hotel:
-                hotel["id"] = str(hotel["_id"])
-            return hotel
+            return self._to_response_dict(hotel) if hotel else None
         except Exception as e:
             logger.error(f"Erreur lors de la récupération de l'hôtel: {e}")
             raise
@@ -40,8 +61,7 @@ class HotelService:
         try:
             hotels = []
             async for hotel in self.collection.find({}).skip(skip).limit(limit):
-                hotel["id"] = str(hotel["_id"])
-                hotels.append(hotel)
+                hotels.append(self._to_response_dict(hotel))
             return hotels
         except Exception as e:
             logger.error(f"Erreur lors de la récupération des hôtels: {e}")
@@ -52,8 +72,7 @@ class HotelService:
         try:
             hotels = []
             async for hotel in self.collection.find({"ville": ville}):
-                hotel["id"] = str(hotel["_id"])
-                hotels.append(hotel)
+                hotels.append(self._to_response_dict(hotel))
             return hotels
         except Exception as e:
             logger.error(f"Erreur lors de la récupération des hôtels par ville: {e}")
@@ -64,8 +83,7 @@ class HotelService:
         try:
             hotels = []
             async for hotel in self.collection.find({"categorie": categorie}):
-                hotel["id"] = str(hotel["_id"])
-                hotels.append(hotel)
+                hotels.append(self._to_response_dict(hotel))
             return hotels
         except Exception as e:
             logger.error(f"Erreur lors de la récupération des hôtels par catégorie: {e}")
@@ -79,8 +97,7 @@ class HotelService:
                 "tarif_nuit_min_fcfa": {"$gte": min_price},
                 "tarif_nuit_max_fcfa": {"$lte": max_price}
             }):
-                hotel["id"] = str(hotel["_id"])
-                hotels.append(hotel)
+                hotels.append(self._to_response_dict(hotel))
             return hotels
         except Exception as e:
             logger.error(f"Erreur lors de la récupération des hôtels par prix: {e}")
@@ -117,8 +134,7 @@ class HotelService:
         try:
             hotels = []
             async for hotel in self.collection.find({"publie": True}).sort("note_moyenne", -1).limit(limit):
-                hotel["id"] = str(hotel["_id"])
-                hotels.append(hotel)
+                hotels.append(self._to_response_dict(hotel))
             return hotels
         except Exception as e:
             logger.error(f"Erreur lors de la récupération des meilleurs hôtels: {e}")

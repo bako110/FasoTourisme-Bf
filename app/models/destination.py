@@ -36,8 +36,8 @@ class Destination(BaseModel):
     tarif_guide_fcfa: Optional[float] = Field(None, description="Tarif du guide en FCFA")
     
     # Images et médias
-    image_principale: Optional[str] = Field(None, description="URL de l'image principale")
-    galerie_images: List[str] = Field(default=[], description="URLs des images supplémentaires")
+    image: Optional[str] = Field(None, description="URL de l'image principale")
+    images: List[str] = Field(default=[], description="URLs des images supplémentaires")
     video_url: Optional[str] = Field(None, description="URL d'une vidéo")
     
     # Évaluations

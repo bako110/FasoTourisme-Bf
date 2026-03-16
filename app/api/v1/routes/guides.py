@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, File, UploadFile
 from typing import List
 from app.core.database import get_database
 from app.core.security import get_current_user, require_admin
@@ -6,7 +6,8 @@ from app.core.permissions import Permission, OwnershipCheck
 from app.schemas.auth import TokenPayload
 from app.models.user import UserRole
 from app.services.guide_service import GuideService
-from app.schemas.guide import GuideCreate, GuideUpdate, GuideResponse
+from app.services.cloudinary_service import cloudinary_service
+from app.schemas.guide import GuideCreate, GuideUpdate, GuideResponse, GuideProfileCreate
 import logging
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,109 @@ async def create_guide(
         raise HTTPException(status_code=500, detail="Erreur serveur")
 
 
-@router.get("/{guide_id}", response_model=GuideResponse)
+@router.post("/profile", response_model=dict, status_code=201)
+async def create_guide_profile(
+    profile: GuideProfileCreate,
+    current_user: TokenPayload = Depends(get_current_user),
+    service: GuideService = Depends(get_guide_service)
+):
+    """Créer/compléter le profil guide (mobile app)"""
+    try:
+        # Vérifier que l'utilisateur est bien un guide
+        if current_user.sub != profile.user_id:
+            raise HTTPException(status_code=403, detail="Non autorisé")
+        
+        if current_user.role != "guide":
+            raise HTTPException(status_code=403, detail="Seuls les guides peuvent créer un profil guide")
+        
+        # Créer le profil guide
+        guide_id = await service.create_guide_profile(profile, current_user.sub)
+        return {"id": guide_id, "message": "Profil guide créé avec succès"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erreur création profil guide: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+
+@router.get("/me", response_model=GuideResponse, response_model_by_alias=True)
+async def get_my_guide_profile(
+    current_user: TokenPayload = Depends(get_current_user),
+    service: GuideService = Depends(get_guide_service)
+):
+    """Récupérer mon profil guide (guide connecté)"""
+    try:
+        # Vérifier que l'utilisateur est bien un guide
+        if current_user.role != "guide":
+            raise HTTPException(status_code=403, detail="Seuls les guides peuvent accéder à cette ressource")
+        
+        # Récupérer le profil guide lié à cet utilisateur
+        guide = await service.get_guide_by_user_id(current_user.sub)
+        if not guide:
+            raise HTTPException(status_code=404, detail="Profil guide non trouvé")
+        
+        logger.info(f"Retour profil guide pour {current_user.sub}: {guide.get('nom_complet')}")
+        return guide
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erreur récupération profil guide: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+
+@router.post("/me/photo", response_model=dict)
+async def upload_guide_photo(
+    file: UploadFile = File(...),
+    current_user: TokenPayload = Depends(get_current_user),
+    service: GuideService = Depends(get_guide_service)
+):
+    """Upload photo de profil du guide connecté"""
+    try:
+        # Vérifier que l'utilisateur est bien un guide
+        if current_user.role != "guide":
+            raise HTTPException(status_code=403, detail="Seuls les guides peuvent uploader une photo")
+        
+        # Vérifier le type de fichier
+        if not file.content_type or not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Le fichier doit être une image")
+        
+        # Lire le contenu du fichier
+        file_content = await file.read()
+        
+        # Upload vers Cloudinary
+        result = await cloudinary_service.upload_image(
+            file_content=file_content,
+            folder="guides/profiles",
+            public_id=f"guide_{current_user.sub}"
+        )
+        
+        # Mettre à jour le profil du guide avec l'URL de la photo
+        db = get_database()
+        photo_url = result.get("secure_url")
+        
+        update_result = await db["guides"].update_one(
+            {"user_id": current_user.sub},
+            {"$set": {"image": photo_url}}
+        )
+        
+        if update_result.modified_count == 0:
+            logger.warning(f"Photo uploadée mais profil guide non trouvé pour user_id: {current_user.sub}")
+        
+        logger.info(f"Photo de profil uploadée pour guide {current_user.sub}: {photo_url}")
+        
+        return {
+            "message": "Photo de profil uploadée avec succès",
+            "photo_url": photo_url,
+            "public_id": result.get("public_id")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erreur upload photo guide: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+
+
+@router.get("/{guide_id}", response_model=GuideResponse, response_model_by_alias=True)
 async def get_guide(
     guide_id: str,
     current_user: TokenPayload = Depends(get_current_user),
@@ -58,7 +161,7 @@ async def get_guide(
         raise HTTPException(status_code=500, detail="Erreur serveur")
 
 
-@router.get("/", response_model=List[GuideResponse])
+@router.get("/", response_model=List[GuideResponse], response_model_by_alias=True)
 async def get_all_guides(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),

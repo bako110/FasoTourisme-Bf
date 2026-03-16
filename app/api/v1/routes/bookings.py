@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query, Depends, status
-from typing import List
+from typing import List, Optional
 from app.core.security import get_current_user, require_admin
 from app.core.permissions import Permission, OwnershipCheck
 from app.schemas.auth import TokenPayload
@@ -80,6 +80,36 @@ async def get_high_value(
         raise HTTPException(status_code=500, detail="Erreur serveur")
 
 
+@router.get("/me", response_model=List[BookingResponse])
+@router.get("/client/me", response_model=List[BookingResponse])
+async def get_my_bookings(
+    current_user: TokenPayload = Depends(get_current_user)
+):
+    """Récupérer les réservations de l'utilisateur connecté"""
+    try:
+        return await booking_service.get_bookings_by_client(current_user.sub)
+    except Exception as e:
+        logger.error(f"Erreur: {e}")
+        raise HTTPException(status_code=500, detail="Erreur serveur")
+
+
+@router.get("/guide/me", response_model=List[BookingResponse])
+async def get_my_guide_bookings(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    current_user: TokenPayload = Depends(get_current_user)
+):
+    """Récupérer les réservations liées au guide connecté"""
+    try:
+        Permission.check_guide(current_user)
+        return await booking_service.get_bookings_by_guide(current_user.sub, skip, limit)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erreur: {e}")
+        raise HTTPException(status_code=500, detail="Erreur serveur")
+
+
 @router.get("/client/{client_id}", response_model=List[BookingResponse])
 async def get_by_client(
     client_id: str,
@@ -87,7 +117,6 @@ async def get_by_client(
 ):
     """Récupérer les réservations d'un client (propriétaire ou ADMIN)"""
     try:
-        # Vérifier que c'est le client lui-même ou un admin
         if current_user.role != UserRole.ADMIN and current_user.sub != client_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -178,9 +207,10 @@ async def update_one(
 
 
 @router.post("/{booking_id}/cancel")
+@router.put("/{booking_id}/cancel")
 async def cancel(
     booking_id: str,
-    raison: str = Query(...),
+    raison: Optional[str] = Query(None),
     current_user: TokenPayload = Depends(get_current_user)
 ):
     """Annuler une réservation (propriétaire ou ADMIN)"""

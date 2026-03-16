@@ -70,10 +70,9 @@ async def get_hotel(
 async def get_all_hotels(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
-    current_user: TokenPayload = Depends(get_current_user),
     service: HotelService = Depends(get_hotel_service)
 ):
-    """Récupérer tous les hôtels publiés (authentifié requis)"""
+    """Récupérer tous les hôtels publiés"""
     try:
         return await service.get_all_hotels(skip=skip, limit=limit)
     except Exception as e:

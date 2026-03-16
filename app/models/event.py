@@ -67,8 +67,8 @@ class LocalEvent(BaseModel):
     )
     
     # Médias
-    image_principale: Optional[str] = None
-    galerie_images: List[str] = Field(default=[])
+    image: Optional[str] = None
+    images: List[str] = Field(default=[])
     video_url: Optional[str] = None
     
     # Recommandations

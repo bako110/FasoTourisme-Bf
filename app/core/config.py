@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     # Utilisez "*" pour accepter toutes les origines ou liste séparée par virgules
     ALLOWED_ORIGINS: str
     
+    # Cloudinary - REQUIS: À définir via variables d'environnement
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
+    
     @property
     def cors_origins(self) -> list:
         """Convertit ALLOWED_ORIGINS en liste. Si vide ou *, accepte toutes les origines"""

@@ -11,7 +11,7 @@ class Guide(BaseModel):
     # Informations personnelles
     nom: str = Field(..., description="Nom du guide")
     prenom: str = Field(..., description="Prénom du guide")
-    photo: Optional[str] = Field(None, description="Photo du guide")
+    image: Optional[str] = Field(None, description="URL de la photo du guide")
     
     # Contact
     telephone: str = Field(..., description="Numéro de téléphone")
@@ -42,6 +42,9 @@ class Guide(BaseModel):
         default=[],
         description="Destinations principales"
     )
+
+    # Tours proposés/maitrisés
+    tours_proposes: List[str] = Field(default=[], description="Liste des tours que le guide peut proposer ou maitriser")
     
     # Services
     tarif_journee_fcfa: float = Field(..., description="Tarif par jour en FCFA")
@@ -77,6 +80,8 @@ class Guide(BaseModel):
     
     class Config:
         populate_by_name = True
+        from_attributes = True
+        extra = "allow"
         json_schema_extra = {
             "example": {
                 "nom": "Traore",

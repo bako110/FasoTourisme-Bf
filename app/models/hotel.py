@@ -52,8 +52,8 @@ class Hotel(BaseModel):
     website: Optional[str] = None
     
     # Images
-    image_principale: Optional[str] = None
-    galerie_images: List[str] = Field(default=[])
+    image: Optional[str] = None
+    images: List[str] = Field(default=[])
     
     # Évaluations
     note_moyenne: float = Field(default=0, ge=0, le=5)

@@ -57,6 +57,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     telephone: Optional[str] = None
+    photo_url: Optional[str] = None
     nom_complet: str
     role: UserRole
     actif: bool

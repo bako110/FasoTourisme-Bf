@@ -30,8 +30,9 @@ class User(BaseModel):
     
     # Pour PROVIDER : statut de vérification du profil métier
     profil_verifiee: bool = False  # Vérification du profil business (par ADMIN)
-    
-    # Métadonnées
+        # Photo de profil
+    photo_url: Optional[str] = None
+        # Métadonnées
     date_creation: datetime = Field(default_factory=datetime.utcnow)
     date_derniere_connexion: Optional[datetime] = None
     adresse_ip_derniere_connexion: Optional[str] = None
@@ -52,6 +53,7 @@ class UserPublic(BaseModel):
     email: str
     telephone: Optional[str] = None
     nom_complet: str
+    photo_url: Optional[str] = None
     role: UserRole
     actif: bool
     verifiee: bool

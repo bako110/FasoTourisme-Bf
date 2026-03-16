@@ -23,8 +23,8 @@ class HotelCreate(BaseModel):
     telephone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
-    image_principale: Optional[str] = None
-    galerie_images: List[str] = []
+    image: Optional[str] = None
+    images: List[str] = []
 
 
 class HotelUpdate(BaseModel):
@@ -48,8 +48,8 @@ class HotelUpdate(BaseModel):
     telephone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
-    image_principale: Optional[str] = None
-    galerie_images: Optional[List[str]] = None
+    image: Optional[str] = None
+    images: Optional[List[str]] = None
     note_moyenne: Optional[float] = None
     publie: Optional[bool] = None
 

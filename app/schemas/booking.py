@@ -7,6 +7,7 @@ class BookingCreate(BaseModel):
     """Schéma pour créer une réservation"""
     type_reservation: str
     ressource_id: str
+    nom_tour: Optional[str] = None
     client_nom: str
     client_email: str
     client_telephone: str
@@ -44,12 +45,18 @@ class BookingResponse(BaseModel):
     id: Optional[str] = None
     type_reservation: str
     ressource_id: str
+    nom_tour: Optional[str] = None
     client_nom: str
     client_email: str
     client_telephone: str
     date_arrivee: datetime
     date_depart: Optional[datetime]
     nombre_personnes: int
+    notes_speciales: Optional[str] = None
+    tarif_unitaire_fcfa: Optional[float] = None
+    nombre_nuits_ou_jours: Optional[float] = None
+    montant_total_fcfa: Optional[float] = None
+    reduction_pourcent: Optional[float] = None
     montant_final_fcfa: float
     statut_reservation: str
     statut_paiement: str

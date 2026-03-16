@@ -54,7 +54,7 @@ class EventResponse(BaseModel):
     gratuit: bool
     description_culturelle: str
     activites: List[str]
-    image_principale: Optional[str]
+    image: Optional[str]
     
     class Config:
         populate_by_name = True

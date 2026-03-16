@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, File, UploadFile
 from app.schemas.auth import (
     TokenRequest, TokenResponse, UserRegister, UserResponse,
     PasswordUpdate, TokenPayload
@@ -11,6 +11,9 @@ from app.core.security import (
 from app.models.user import UserRole
 from datetime import timedelta
 import logging
+from bson import ObjectId
+from app.core.database import get_database
+from app.services.cloudinary_service import cloudinary_service
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +41,7 @@ async def register(user_data: UserRegister):
             id=user_id,
             email=user["email"],
             telephone=user.get("telephone"),
+            photo_url=user.get("photo_url"),
             nom_complet=user["nom_complet"],
             role=UserRole(user["role"]),
             actif=user["actif"],
@@ -100,6 +104,7 @@ async def get_current_user_profile(current_user: TokenPayload = Depends(get_curr
             id=str(user["_id"]),
             email=user["email"],
             telephone=user.get("telephone"),
+            photo_url=user.get("photo_url"),
             nom_complet=user["nom_complet"],
             role=UserRole(user["role"]),
             actif=user["actif"],
@@ -110,6 +115,51 @@ async def get_current_user_profile(current_user: TokenPayload = Depends(get_curr
     except Exception as e:
         logger.error(f"Erreur: {e}")
         raise HTTPException(status_code=500, detail="Erreur serveur")
+
+
+@router.post("/me/photo", response_model=dict)
+async def upload_my_profile_photo(
+    file: UploadFile = File(...),
+    current_user: TokenPayload = Depends(get_current_user)
+):
+    """Uploader la photo de profil de l'utilisateur connecté"""
+    try:
+        if not file.content_type or not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Le fichier doit être une image")
+
+        file_content = await file.read()
+        if not file_content:
+            raise HTTPException(status_code=400, detail="Fichier vide")
+
+        result = await cloudinary_service.upload_image(
+            file_content=file_content,
+            folder="users/profiles",
+            public_id=f"user_{current_user.sub}"
+        )
+
+        photo_url = result.get("secure_url")
+        if not photo_url:
+            raise HTTPException(status_code=500, detail="Impossible de récupérer l'URL de la photo")
+
+        db = get_database()
+        update_result = await db["users"].update_one(
+            {"_id": ObjectId(current_user.sub)},
+            {"$set": {"photo_url": photo_url}}
+        )
+
+        if update_result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+
+        return {
+            "message": "Photo de profil mise à jour avec succès",
+            "photo_url": photo_url
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erreur upload photo utilisateur: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de l'upload de la photo")
 
 
 @router.put("/me/password")

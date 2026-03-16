@@ -49,7 +49,7 @@ def create_access_token(
     to_encode = {
         "sub": user_id,
         "email": email,
-        "role": role,
+        "role": role.value if isinstance(role, UserRole) else role,
         "permissions": permissions or [],
         "exp": expire
     }

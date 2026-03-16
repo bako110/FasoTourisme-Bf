@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
 from app.api.v1.routes import (
-    auth, destinations, hotels, activities, guides, providers,
+    auth, destinations, hotels, activities, guides, guide_availability, providers,
     bookings, reviews, events, artisans, cuisines, stories,
     health, security, emergency, roads, services,
     health_advisory, tourist_info, support
@@ -69,6 +69,7 @@ app.include_router(destinations.router, prefix=settings.API_V1_PREFIX)
 app.include_router(hotels.router, prefix=settings.API_V1_PREFIX)
 app.include_router(activities.router, prefix=settings.API_V1_PREFIX)
 app.include_router(guides.router, prefix=settings.API_V1_PREFIX)
+app.include_router(guide_availability.router, prefix=settings.API_V1_PREFIX + "/availability", tags=["Guide Availability"])
 app.include_router(providers.router, prefix=settings.API_V1_PREFIX)
 
 # ============================================
